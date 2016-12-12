@@ -1,4 +1,4 @@
-from __future__ import print_function
+#from __future__ import print_function
 import httplib2
 import os
 
@@ -59,7 +59,23 @@ def main():
     service = discovery.build('gmail', 'v1', http=http)
 
     results = service.users().threads().list(q='subject:"Re: Portland"',userId='me').execute()
+    thread_ids = [cs['id'] for cs in results['threads']]
 
+    get_thread = lambda tid: service.users().threads().get(id=tid,userId='me',metadataHeaders='metadata').execute()
+
+    thread_data = get_thread(thread_ids[1])
+
+    def header_find(headers,search):
+        for head in headers:
+            if head['name'] == search:
+                return head['value']
+
+    all_headers = [tt['payload']['headers'] for tt in thread_data['messages']]
+
+    froms = [header_find(hh,'From') for hh in all_headers]
+    subjs = [header_find(hh,'Subject') for hh in all_headers]
+    for what in froms:
+        print what
 
 
 
