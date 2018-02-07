@@ -58,7 +58,9 @@ def main():
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
 
-    results = service.users().threads().list(q='subject:"Re: Portland"',userId='me').execute()
+    results = service.users().threads().list(
+        q='subject:"Re: Portland"',
+        userId='me').execute()
     thread_ids = [cs['id'] for cs in results['threads']]
 
     get_thread = lambda tid: service.users().threads().get(id=tid,userId='me',metadataHeaders='metadata').execute()
