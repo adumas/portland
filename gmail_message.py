@@ -1,6 +1,9 @@
 import httplib2
 import os
 import re
+import datetime
+from dateutil.parser import parse as date_parse
+import pickle
 
 from apiclient import discovery
 from apiclient import errors
@@ -26,17 +29,19 @@ class Person():
         print raw
         parsed = re.compile('(.*?)<(.*?)>').search(raw).groups()
 
-        try:
+        if len(parsed) > 0:
             name = parsed[0].strip().strip('"')
-        except:
-            name = None
-        self.Name = name
-
-        try:
             address = parsed[1]
-        except:
-            address = None
+        else:
+            name, address = None, None
+        self.Name = name
         self.Address = address
+
+    def __repr__(self):
+        return self.Name + " <" + self.Address + ">"
+
+    def __str__(self):
+        return self.Name + " <" + self.Address + ">"
 
 
 class Gmail():
@@ -126,19 +131,13 @@ class Gmail():
         except errors.HttpError, error:
             print 'An error occurred: %s' % error
 
-    def get_message(self, msg_id):
-        """ Parse a message and get a dict of values
-        Args:
-            msg_id: The ID of the Message required.
-        Returns:
-            message dict
-        """
-
-        msg = self.get_raw_message(msg_id)
+    def parse_message(self, msg):
         person_fields = ['To', 'From', 'Cc']
+        date_fields = ['Date']
+        text_fields = ['Subject']
         headers = msg['payload']['headers']
 
-        message = {k: None for k in person_fields}
+        message = {k: None for k in person_fields + date_fields + text_fields}
         for item in headers:
             header_field = item['name']
             if header_field in person_fields:
@@ -147,17 +146,40 @@ class Gmail():
                     message[header_field] = Person(people[0])
                 else:
                     message[header_field] = [Person(p) for p in people]
-
+            elif header_field in date_fields:
+                date = item['value']
+                message[header_field] = date_parse(date)
+            elif header_field in text_fields:
+                text = item['value']
+                message[header_field] = text
         return message
+
+    def get_message(self, msg_id):
+        """ Parse a message and get a dict of values
+        Args:
+            msg_id: The ID of the Message required.
+        Returns:
+            message dict
+        """
+
+        raw_message = self.get_raw_message(msg_id)
+        msg = self.parse_message(raw_message)
+        return msg
 
 
 if __name__ == "__main__":
     print "inmain"
-    G = Gmail()
-    test = G.search_messages('subject: "Re: Portland"')
-    msg = G.get_message(test[0]['id'])
-    print msg
-
-    test_person = '"John D\'Agostino" < dags@gmail.com >'
-    p = Person(test_person)
-    print p.Name, p.Address
+    try:
+        with open('sample_msg.pickle', 'rb') as f:
+            # The protocol version used is detected automatically, so we do not
+            # have to specify it.
+            msg = pickle.load(f)
+    except:
+        G = Gmail()
+        test = G.search_messages('subject: "Re: Portland"')
+        msg = G.get_message(test[0]['id'])
+        with open('sample_msg.pickle', 'wb') as f:
+            # Pickle the 'data' dictionary using the highest protocol available.
+            pickle.dump(msg, f, pickle.HIGHEST_PROTOCOL)
+    for field in msg:
+        print field + ": " + str(msg[field])
