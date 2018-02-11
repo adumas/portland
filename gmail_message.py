@@ -1,8 +1,6 @@
 import httplib2
 import os
 import re
-import datetime
-from dateutil.parser import parse as date_parse
 import pickle
 
 from apiclient import discovery
@@ -26,22 +24,20 @@ class Person():
             self.__parse_raw(raw)
 
     def __parse_raw(self, raw):
-        print raw
-        parsed = re.compile('(.*?)<(.*?)>').search(raw).groups()
-
-        if len(parsed) > 0:
+        try:
+            parsed = re.compile('(.*?)<(.*?)>').search(raw).groups()
             name = parsed[0].strip().strip('"')
             address = parsed[1]
-        else:
+        except:
             name, address = None, None
         self.Name = name
         self.Address = address
 
     def __repr__(self):
-        return self.Name + " <" + self.Address + ">"
+        return u"{0} <{1}>".format(self.Name, self.Address)
 
     def __str__(self):
-        return self.Name + " <" + self.Address + ">"
+        return u"{0} <{1}>".format(self.Name, self.Address)
 
 
 class Gmail():
@@ -51,6 +47,10 @@ class Gmail():
         self.__scope = 'https://www.googleapis.com/auth/gmail.readonly'
         self.__clientSecretFile = credentials_file
         self.__applicationName = 'Gmail API Python'
+        self.__credentials = None
+        self.__setup()
+
+    def __setup(self):
         self.__credentials = self.__get_credentials()
         http = self.__credentials.authorize(httplib2.Http())
         self.service = discovery.build('gmail', 'v1', http=http)
@@ -68,8 +68,8 @@ class Gmail():
         credential_dir = os.path.join(home_dir, '.credentials')
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
-        credential_path = os.path.join(credential_dir,
-                                       'gmail-python-quickstart.json')
+        credential_path = os.path.join(
+            credential_dir, 'gmail-python-quickstart.json')
 
         store = Storage(credential_path)
         credentials = store.get()
@@ -98,8 +98,7 @@ class Gmail():
           appropriate ID to get the details of a Message.
         """
         try:
-            response = self.service.users().messages().list(userId='me',
-                                                            q=query).execute()
+            response = self.service.users().messages().list(userId='me', q=query).execute()
             messages = []
             if 'messages' in response:
                 messages.extend(response['messages'])
@@ -163,23 +162,23 @@ class Gmail():
         """
 
         raw_message = self.get_raw_message(msg_id)
-        msg = self.parse_message(raw_message)
-        return msg
+        return Message(raw_message)
 
 
 if __name__ == "__main__":
     print "inmain"
-    try:
-        with open('sample_msg.pickle', 'rb') as f:
-            # The protocol version used is detected automatically, so we do not
-            # have to specify it.
-            msg = pickle.load(f)
-    except:
-        G = Gmail()
-        test = G.search_messages('subject: "Re: Portland"')
-        msg = G.get_message(test[0]['id'])
-        with open('sample_msg.pickle', 'wb') as f:
-            # Pickle the 'data' dictionary using the highest protocol available.
-            pickle.dump(msg, f, pickle.HIGHEST_PROTOCOL)
-    for field in msg:
-        print field + ": " + str(msg[field])
+    # try:
+    #     with open('raw_message.pickle', 'rb') as f:
+    #         # The protocol version used is detected automatically, so we do not
+    #         # have to specify it.
+    #         raw_message = pickle.load(f)
+    # except:
+    G = Gmail()
+    test = G.search_messages('subject: "Re: Portland"')
+    raw_message = G.get_raw_message(test[2]['id'])
+    with open('raw_message.pickle', 'wb') as f:
+        # Pickle the 'data' dictionary using the highest protocol available.
+        pickle.dump(raw_message, f, pickle.HIGHEST_PROTOCOL)
+
+    msg = Message(raw_message)
+    # print msg
