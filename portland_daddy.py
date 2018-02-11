@@ -43,10 +43,11 @@ def get_credentials():
         flow.user_agent = APPLICATION_NAME
         if flags:
             credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
+        else:  # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
+
 
 def main():
     """Shows basic usage of the Gmail API.
@@ -59,26 +60,26 @@ def main():
     service = discovery.build('gmail', 'v1', http=http)
 
     results = service.users().threads().list(
-        q='subject:"Re: Portland"',
+        q='subject:Portland',
         userId='me').execute()
     thread_ids = [cs['id'] for cs in results['threads']]
 
-    get_thread = lambda tid: service.users().threads().get(id=tid,userId='me',metadataHeaders='metadata').execute()
+    def get_thread(tid): return service.users().threads().get(
+        id=tid, userId='me', metadataHeaders='metadata').execute()
 
     thread_data = get_thread(thread_ids[1])
 
-    def header_find(headers,search):
+    def header_find(headers, search):
         for head in headers:
             if head['name'] == search:
                 return head['value']
 
     all_headers = [tt['payload']['headers'] for tt in thread_data['messages']]
 
-    froms = [header_find(hh,'From') for hh in all_headers]
-    subjs = [header_find(hh,'Subject') for hh in all_headers]
+    froms = [header_find(hh, 'From') for hh in all_headers]
+    subjs = [header_find(hh, 'Subject') for hh in all_headers]
     for what in froms:
         print what
-
 
 
 if __name__ == '__main__':

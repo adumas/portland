@@ -10,5 +10,7 @@ print msg
 
 messageList = []
 for msg in test[:10]:
-    print msg['id']
-    messageList.append(G.get_message(msg['id']))
+    # print msg['id']
+    parsed = G.get_message(msg['id'])
+    print u"{} -> {}".format(parsed.sender, parsed.to)
+    messageList.append(parsed)

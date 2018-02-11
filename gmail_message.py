@@ -1,7 +1,7 @@
 import httplib2
 import os
-import re
 import pickle
+from message import *
 
 from apiclient import discovery
 from apiclient import errors
@@ -14,30 +14,6 @@ try:
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
-
-
-class Person():
-    def __init__(self, raw=None):
-        self.Name = None
-        self.Address = None
-        if raw is not None:
-            self.__parse_raw(raw)
-
-    def __parse_raw(self, raw):
-        try:
-            parsed = re.compile('(.*?)<(.*?)>').search(raw).groups()
-            name = parsed[0].strip().strip('"')
-            address = parsed[1]
-        except:
-            name, address = None, None
-        self.Name = name
-        self.Address = address
-
-    def __repr__(self):
-        return u"{0} <{1}>".format(self.Name, self.Address)
-
-    def __str__(self):
-        return u"{0} <{1}>".format(self.Name, self.Address)
 
 
 class Gmail():

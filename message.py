@@ -1,5 +1,30 @@
 import base64
+import re
 from dateutil.parser import parse as date_parse
+
+
+class Person():
+    def __init__(self, raw=None):
+        self.Name = None
+        self.Address = None
+        if raw is not None:
+            self.__parse_raw(raw)
+
+    def __parse_raw(self, raw):
+        try:
+            parsed = re.compile('(.*?)<(.*?)>').search(raw).groups()
+            name = parsed[0].strip().strip('"')
+            address = parsed[1]
+        except:
+            name, address = None, None
+        self.Name = name
+        self.Address = address
+
+    def __repr__(self):
+        return u"{0} <{1}>".format(self.Name, self.Address)
+
+    def __str__(self):
+        return u"{0} <{1}>".format(self.Name, self.Address)
 
 
 class Message():
@@ -31,11 +56,13 @@ class Message():
         date_fields = ['Date']
         text_fields = ['Subject']
         if field in person_fields:
-            self.add_person(field, value)
+            if field == "From":
+                field = "sender"
+            self.add_person(field.lower(), value)
         elif field in date_fields:
-            self.add_date(field, value)
+            self.add_date(field.lower(), value)
         elif field in text_fields:
-            self.add_text(field, value)
+            self.add_text(field.lower(), value)
 
     def add_nonheader(self, field, msg):
         self.add_text(field, msg[field])
