@@ -15,7 +15,21 @@
 - Data class
    - Create DB
       - message schema
+         - subject
+         - message id
+         - snippet
+         - n_recipients
+         - sender
+         - date
+         - internalDate
+         - attachments
+         - body
       - person schema
+         - message id
+         - name
+         - email address
+         - relationship (send, recieve)
+
    - Add messages to DB
    - Query DB?
 - Analysis

@@ -30,7 +30,7 @@ class Person():
 class Message():
     def __init__(self, msg=None):
         self.to = None
-        self.sender = None
+        self.from_ = None
         self.cc = None
         self.body = None
         self.subject = None
@@ -57,7 +57,7 @@ class Message():
         text_fields = ['Subject']
         if field in person_fields:
             if field == "From":
-                field = "sender"
+                field = "from_"
             self.add_person(field.lower(), value)
         elif field in date_fields:
             self.add_date(field.lower(), value)
