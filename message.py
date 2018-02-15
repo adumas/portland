@@ -5,8 +5,8 @@ from dateutil.parser import parse as date_parse
 
 class Person():
     def __init__(self, raw=None):
-        self.Name = None
-        self.Address = None
+        self.name = None
+        self.address = None
         if raw is not None:
             self.__parse_raw(raw)
 
@@ -17,14 +17,14 @@ class Person():
             address = parsed[1]
         except:
             name, address = None, None
-        self.Name = name
-        self.Address = address
+        self.name = name
+        self.address = address
 
     def __repr__(self):
-        return u"{0} <{1}>".format(self.Name, self.Address)
+        return u"{0} <{1}>".format(self.name, self.address)
 
     def __str__(self):
-        return u"{0} <{1}>".format(self.Name, self.Address)
+        return u"{0} <{1}>".format(self.name, self.address)
 
 
 class Message():
@@ -32,11 +32,13 @@ class Message():
         self.to = None
         self.from_ = None
         self.cc = None
-        self.body = None
+        self.body = ''
         self.subject = None
         self.date = None
         self.internalDate = 0
         self.snippet = None
+        self.id = None
+        self.num_recipients = 0
 
         if msg is not None:
             self.header_parse(msg)
@@ -45,6 +47,7 @@ class Message():
         # add snippet and internalDate from message base (not headers)
         self.add_nonheader('snippet', msg)
         self.add_nonheader('internalDate', msg)
+        self.add_nonheader('id', msg)
 
         # get headers and add them
         headers = msg['payload']['headers']
@@ -77,6 +80,10 @@ class Message():
     def add_person(self, field, person):
         people = person.split(',')
         existing = getattr(self, field)
+
+        if field == "to" or field == "cc":
+            self.num_recipients += len(people)
+
         if existing is None:
             setattr(self, field, [Person(p) for p in people])
         else:
